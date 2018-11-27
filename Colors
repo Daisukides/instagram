@@ -1,0 +1,105 @@
+// 'Colors' by Daisukides using java
+
+float inc = 0.1;
+float scl = 10;
+int cols, rows;
+
+float zoff = 0;
+float xflat = 1, yflat = 1, zflat = 1;
+
+ArrayList<Particle> p = new ArrayList<Particle>();
+PVector[][] flow;
+
+int time = 0;
+int nth = 1;
+
+void setup() {
+  fullScreen(P2D);
+  frameRate(120);
+  
+  blendMode(ADD);
+  
+  for(int i = 0; i<20000; i++) {
+    p.add(new Particle());
+  }
+  
+  cols = floor(width / scl);
+  rows = floor(height / scl);
+  
+  flow = new PVector[cols][rows];
+  background(0);
+}
+
+void draw() {
+  float yoff = 0;
+  for(int y = 0; y<rows; y++){
+    float xoff = 0;
+    for(int x = 0; x<cols; x++){
+      float r = noise(xoff*xflat, yoff*yflat, zoff*zflat) * TWO_PI * 2;
+      PVector v = new PVector();
+      v.set(cos(r+(millis()*1.0/100000.0)),sin(r+(millis()*1.0/100000.0)));
+      v.setMag(0.01);
+      flow[x][y] = v;
+      xoff += inc;
+    }
+    yoff+=inc;
+  }
+  zoff+=0.0005;
+  
+  for(int i = 0; i<p.size(); i++){Particle k = p.get(i);
+    k.applyForce();
+    k.edges();
+    k.update();
+    k.show();
+  }
+  
+  //if(keyPressed & key == 's') {
+  //  save("data/inst_" + nf(nth,4) + ".png");
+  //  nth++;
+  //  background(255);
+  //  time = millis();
+  //  xflat = random(0.5,1.5);
+  //  yflat = random(0.5,1.5);
+  //  zflat = random(0.5,1.5);
+  //}
+ 
+  //println((millis()-time)/1000);
+  
+}
+
+class Particle {
+  PVector pos = new PVector(random(width),random(height));
+  PVector vel = new PVector();
+  PVector acc = new PVector();
+  float maxspeed = 2;
+  
+  void update() {
+    vel.add(acc);
+    vel.limit(maxspeed);
+    pos.add(vel);
+    acc.mult(0);
+  }
+  
+  void applyForce() {
+    int x = constrain(floor(pos.x / scl),0,cols-1);
+    int y = constrain(floor(pos.y / scl),0,rows-1);
+    acc.add(
+    flow[x][y]
+    );
+  }
+  
+  void show() {
+    colorMode(HSB);
+    stroke(255-((millis()/1000)%255),255,255,3);
+    //ellipse(pos.x, pos.y, 5, 5);
+    point(pos.x, pos.y);
+  }
+  
+  void edges() {
+    if(pos.x > width) pos.x = 0;
+    if(pos.x < 0) pos.x = width;
+    if(pos.y > height) pos.y = 0;
+    if(pos.y < 0) pos.y = height;
+  }
+  
+}
